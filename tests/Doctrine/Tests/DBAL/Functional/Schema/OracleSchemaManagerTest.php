@@ -218,4 +218,13 @@ class OracleSchemaManagerTest extends SchemaManagerFunctionalTestCase
             $onlineForeignTable->getForeignKey('"Primary_Table_Fk"')->getQuotedForeignColumns($platform)
         );
     }
+
+    public function testTablesExistLowerCase()
+    {
+        $this->_sm->tryMethod('DropTable', '"tables_exist_test"');
+
+        $this->assertFalse($this->_sm->tablesExist(array('tables_exist_test')));
+        $this->createTestTable('"tables_exist_test"');
+        $this->assertTrue($this->_sm->tablesExist(array('tables_exist_test')));
+    }
 }
