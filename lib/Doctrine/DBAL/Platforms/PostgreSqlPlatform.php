@@ -1185,4 +1185,9 @@ class PostgreSqlPlatform extends AbstractPlatform
 
         return parent::quoteStringLiteral($str);
     }
+
+	public function getSequenceDataSQL($sequenceName, $schemaName)
+	{
+		return 'SELECT min_value, increment_by FROM ' . $this->quoteIdentifier($sequenceName);
+    }
 }

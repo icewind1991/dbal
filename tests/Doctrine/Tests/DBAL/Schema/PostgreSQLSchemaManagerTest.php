@@ -18,10 +18,10 @@ class PostgreSQLSchemaManagerTest extends \PHPUnit_Framework_TestCase
      */
     private $connection;
 
-    protected function setUp()
+    private function setupConnectionAndManager($platformClass)
     {
         $driverMock = $this->getMock('Doctrine\DBAL\Driver');
-        $platform = $this->getMock('Doctrine\DBAL\Platforms\PostgreSqlPlatform');
+        $platform = $this->getMock($platformClass);
         $this->connection = $this->getMock(
             'Doctrine\DBAL\Connection',
             array(),
@@ -32,9 +32,12 @@ class PostgreSQLSchemaManagerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @group DBAL-474
+     * @dataProvider filtersSequencesDataProvider
      */
-    public function testFiltersSequences()
+    public function testFiltersSequences(string $platformClass)
     {
+        $this->setupConnectionAndManager($platformClass);
+
         $configuration = new Configuration();
         $configuration->setFilterSchemaAssetsExpression('/^schema/');
 
@@ -45,6 +48,7 @@ class PostgreSQLSchemaManagerTest extends \PHPUnit_Framework_TestCase
             array('relname' => 'bloo', 'schemaname' => 'bloo_schema'),
         );
 
+
         $this->connection->expects($this->any())
             ->method('getConfiguration')
             ->will($this->returnValue($configuration));
@@ -53,11 +57,11 @@ class PostgreSQLSchemaManagerTest extends \PHPUnit_Framework_TestCase
             ->method('fetchAll')
             ->will($this->returnValue($sequences));
 
-        $this->connection->expects($this->at(1))
+        $this->connection->expects($this->at(2))
             ->method('fetchAll')
             ->will($this->returnValue(array(array('min_value' => 1, 'increment_by' => 1))));
 
-        $this->connection->expects($this->at(2))
+        $this->connection->expects($this->at(3))
             ->method('fetchAll')
             ->will($this->returnValue(array(array('min_value' => 2, 'increment_by' => 2))));
 
@@ -66,10 +70,18 @@ class PostgreSQLSchemaManagerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             array(
-                new Sequence('schema.foo', 2, 2),
-                new Sequence('schema.bar', 1, 1),
+                new Sequence('schema.foo', 1, 1),
+                new Sequence('schema.bar', 2, 2),
             ),
             $this->schemaManager->listSequences('database')
         );
+    }
+
+    public function filtersSequencesDataProvider()
+    {
+        return [
+            ['Doctrine\DBAL\Platforms\PostgreSqlPlatform'],
+            ['Doctrine\DBAL\Platforms\PostgreSQL100Platform']
+        ];
     }
 }

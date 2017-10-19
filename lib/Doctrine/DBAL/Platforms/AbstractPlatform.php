@@ -3533,4 +3533,9 @@ abstract class AbstractPlatform
     {
         return "'";
     }
+
+    public function getSequenceDataSQL($sequenceName, $schemaName)
+    {
+        throw DBALException::notSupported(__METHOD__);
+    }
 }
